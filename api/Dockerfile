@@ -1,27 +1,3 @@
-セクション 3: Docker を使った Rails+Nuxt.js 環境構築
-
-※ `$ mkdir udemy_demoapp_v2 && cd $_`<br>
-
-## 07 Rails を動かす Dockerfile を作成する 1/2 〜作成編〜
-
-### ハンズオン
-
-- `$ mkdir {api,front}`(スペースは空けない)を実行<br>
-
-* `api`ディレクトリに移動する<br>
-
-* `$ touch {Dockerfile,Gemfile,Gemfile.lock}`を実行<br>
-
-- `api/Gemfile`ファイルを編集<br>
-
-```
-source 'https://rubygems.org'
-gem 'rails', '~> 6.0.0' # 6.0.0以上、6.1.0未満で最新 = 6.0.x
-```
-
-- `api/Dockerfile`ファイルを編集<br>
-
-```
 FROM ruby:2.7.1-alpine
 
 ARG WORKDIR
@@ -49,4 +25,3 @@ RUN apk update && \
 COPY . .
 
 CMD ["rails", "server", "-b", "0.0.0.0"]
-```

@@ -1,0 +1,2 @@
+source 'https://rubygems.org'
+gem 'rails', '~> 6.0.0' # 6.0.0以上、6.1.0未満で最新 = 6.0.x
