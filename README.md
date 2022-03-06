@@ -188,3 +188,100 @@ C ≠ en_US<br>
 LANG = C.UTF-8<br>
 
 コンピューター用の英語を文字コード UTF-8 で利用する<br>
+
+## 10 Dockerfile のベストプラクティス
+
+- `api/Dockerfile`を編集（改善)<br>
+
+```Dockerfile:Dockerfile
+# ベースイメージを指定する
+# FROM ベースイメージ:タグ(タグはなくてもよいが最新のものが指定されることになる)
+FROM ruby:2.7.2-alpine
+
+# Dockerfile内で使用する変数を定義
+# appという値が入る
+ARG WORKDIR
+
+ARG RUNTIME_PACKAGES="nodejs tzdata postgresql-dev postgresql git"
+
+ARG DEV_PACKAGES="build-base curl-dev"
+
+# 環境変数を定義(Dockerfile, コンテナ参照可能)
+# Rails ENV["TZ"] => Asia/Tokyoが出力される
+ENV HOME=/${WORKDIR} \
+    LANG=C.UTF-8 \
+    TZ=Asia/Tokyo
+
+# Dockerfime内で指定した命令を実行する・・・RUN, COPY, ADD, ENTORYPOINT, CMD
+# 作業ディレクトリを定義
+# コンテナ/app/Railsアプリ
+WORKDIR ${HOME}
+
+# ホスト側の(PC)のファイルをコンテナにコピー
+# COPY コピー元(ホスト) コピー先(コンテナ)
+# Gemfile* ... Gemfileから始まるファイルを全指定(Gemfile, Gemfile, Gemfile.lock)
+# コピー元(ホスト) ... Dockerfileがあるディレクトリ以下を指定(api) ../ NG
+# コピー先(コンテナ) ... 絶対パス or 相対パス(./ ... 今いる(カレント)ディレクトリ)
+COPY Gemfile* ./
+
+# apk ... Alpine Linuxのコマンド
+# apk update = パッケージの最新リストを取得
+RUN apk update && \
+  # apk upgrade = インストールパッケージを最新のものに
+  apk upgrade && \
+  # apk add = パッケージのインストールを実行
+  # --no-cache = パッケージをキャッシュしない(Dokcerイメージを軽量化)
+  apk add --no-cache ${RUNTIME_PACKAGES} && \
+  # --virtual 名前(任意) = 仮想パッケージ
+  apk add --virtual build-dependencies --no-cache ${DEV_PACKAGES} && \
+  # Gemのインストールコマンド
+  # -j4(jobs=4) = Gemインストールの高速化
+  bundle install -j4 && \
+  # パーケージを削除(Dokcerイメージを軽量化)
+  apk del build-dependencies
+
+# . ... Dockerfileがあるディレクトリ全てのファイル(サブディレクトリも含む)
+COPY . ./
+
+# コンテナ内で実行したいコマンドを定義
+# -b ... バインド、プロセスを指定してip(0.0.0.0)アドレスに紐付け(バインド)する
+CMD ["rails", "server", "-b", "0.0.0.0"]
+
+# ホスト(PC)       | コンテナ
+# ブラウザ(外部)    | Rails
+```
+
+- `front/Dockerfile`を編集（改善）<br>
+
+```Dockerfile:Dockerfile
+# FROM node:14.4.0-alpine 使用不可
+FROM node:16.13.1-alpine
+
+ARG WORKDIR
+
+ENV HOME=/${WORKDIR} \
+  LANG=C.UTF-8 \
+  TZ=Asia/Tokyo \
+  # これを指定しないとブラウザからhttp://localhost へアクセスすることができない。
+  # コンテナのNuxt.jsをブラウザから参照するためにip:0.0.0.0に紐付ける
+  # https://ja.nuxtjs.org/faq/host-port/
+  HOST=0.0.0.0
+
+WORKDIR ${HOME}
+
+# 公開用ポート番号を指定
+# 3000番が入ってくる(http://localhost(0.0.0.0):3000)
+# EXPOSE ${CONTAINER_PORT}
+
+# 2021.12.13追記
+# FROM node:14.15.1-alpine
+# node v14.15.1は、$ yarn create nuxt-app appコマンド時に下記エラーが発生するので使用不可
+# eslint-plugin-vue@8.2.0: The engine "node" is incompatible with this module. Expected version "^12.22.0 || ^14.17.0 || >=16.0.0". Got "14.15.1"
+
+# create nuxt-appコマンド成功確認済みのnode version
+# FROM node:16.13.1-alpine
+# or
+# FROM node:16-alpine(node v16.13.1)
+
+# 現在のnode推奨版はこちらから => https://nodejs.org/ja/download/
+```
