@@ -119,3 +119,72 @@ CMD ["rails", "server", "-b", "0.0.0.0"]
 # ホスト(PC)       | コンテナ
 # ブラウザ(外部)    | Rails
 ```
+
+## 09 Nuxt.js を動かす Dockerfile を作成する
+
+- `$ cd front`を実行<br>
+
+* `front/Dockerfile`ファイルを作成<br>
+
+```:Dockerfile
+# FROM node:14.4.0-alpine 使用不可
+FROM node:16.13.1-alpine
+
+ARG WORKDIR
+ARG CONTAINER_PORT
+
+ENV HOME=/${WORKDIR} \
+  LANG=C.UTF-8 \
+  TZ=Asia/Tokyo \
+  HOST=0.0.0.0
+
+# ENV check（このRUN命令は確認のためなので無くても良い）
+RUN echo ${HOME}
+RUN echo ${CONTAINER_PORT}
+
+WORKDIR ${HOME}
+
+EXPOSE ${CONTAINER_PORT}
+
+# 2021.12.13追記
+# FROM node:14.15.1-alpine
+# node v14.15.1は、$ yarn create nuxt-app appコマンド時に下記エラーが発生するので使用不可
+# eslint-plugin-vue@8.2.0: The engine "node" is incompatible with this module. Expected version "^12.22.0 || ^14.17.0 || >=16.0.0". Got "14.15.1"
+
+# create nuxt-appコマンド成功確認済みのnode version
+# FROM node:16.13.1-alpine
+# or
+# FROM node:16-alpine(node v16.13.1)
+
+# 現在のnode推奨版はこちらから => https://nodejs.org/ja/download/
+```
+
+### 環境変数とは
+
+環境変数を一言で言うと OS が保有している変数<br>
+
+今回指定した環境変数の意味<br>
+
+1. HOME ・・・ Home ディレクトリを指定。cd コマンドの戻り先<br>
+2. LANG ・・・ ロケール => 使用する言語や単位（通貨や日付・その並び順）を定義したもの<br>
+3. TZ ・・・ タイムゾーンの指定<br>
+
+LANG=C.UTF-8 とは？<br>
+
+1. LANG ・・・ コンテナ内で使用する言語や単位<br>
+
+2. C ・・・ 言語（en_US, ja_JP)<br>
+
+3. UTF-8 ・・・ 文字コード（SHIFT_JIS）<br>
+
+C とは？<br>
+
+コンピューターのルールに沿った英語<br>
+
+C ≠ en_US<br>
+
+まとめると・・・<br>
+
+LANG = C.UTF-8<br>
+
+コンピューター用の英語を文字コード UTF-8 で利用する<br>
