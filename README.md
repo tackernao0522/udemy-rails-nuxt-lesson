@@ -376,3 +376,70 @@ services:
     depends_on:
       - api
 ```
+
+## 13 docker-compose.yml を理解する
+
+volumes とは？ ・・・ ホスト側のディレクトリをコンテナで使用する<br>
+
+ホスト(./api/tem/db) -> コンテナ(/var/lib/postgresql/data)<br>
+
+ホスト => \$ build => Docker イメージ => コンテナ<br>
+
+- `docker-compose.yml`を編集<br>
+
+```yml:docker-compose.yml
+# composeファイルのバージョン指定
+# Doc: https://docs.docker.com/compose/compose-file/compose-versioning/
+version: '3.8'
+
+services:
+  # サービス(= コンテナ)
+  db:
+    # ベースイメージを定義
+    image: postgres:13.1-alpine
+    # 環境変数を定義
+    environment:
+      # OSのタイムゾーン
+      TZ: UTC
+      # postgresのタイムゾーン
+      PGTZ: UTC
+      # データベースのパスワード
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+    # ホスト側のディレクトリをコンテナで使用する
+    # volumes: ホストパス(絶対 or 相対) : コンテナパス(絶対)
+    volumes:
+      - './api/tmp/db:/var/lib/postgresql/data'
+
+  api:
+    # ベースイメージとなるDockerfileを指定
+    build:
+      context: ./api
+      # Dockerfileに変数を渡す
+      args:
+        WORKDIR: $WORKDIR
+    environment:
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+    volumes:
+      - './api:/$WORKDIR'
+    # サービスの依存関係を定義(起動の順番)
+    # 公開したいポート番号:コンテナポート
+    depends_on:
+      - db
+    # 公開用ポートを指定
+    ports:
+      - '$API_PORT:3000'
+
+  front:
+    build:
+      context: ./front
+      args:
+        WORKDIR: $WORKDIR
+    # コンテナで実行したいコマンド(CMD)
+    command: yarn run dev
+    volumes:
+      - './front:/$WORKDIR'
+    ports:
+      - '$FRONT_PORT:3000'
+    depends_on:
+      - api
+```
