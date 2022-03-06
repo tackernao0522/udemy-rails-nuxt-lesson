@@ -285,3 +285,27 @@ WORKDIR ${HOME}
 
 # 現在のnode推奨版はこちらから => https://nodejs.org/ja/download/
 ```
+
+## 11 docker-compose.yml の環境変数設計
+
+- docker-compose.yml -> コンテナの一元管理<br>
+
+* Dockerfile -> コンテナの設計書<br>
+
+- コンテナ -> アプリ稼働<br>
+
+### DokcerComponse で環境変数を定義する 4 つの方法
+
+① docker-compose.yml のファイル内で宣言<br>
+
+② コンテナ実行時にコマンドで渡す (`$ docker-compose run -e WORKDIR=app`)<br>
+
+③ .env ファイル内で宣言<br>
+
+④ 独自のファイルを用意して宣言<br>
+
+### 環境変数の流れ
+
+.env => docer-compose.yml => Dockerfile => 各コンテナに渡る(Rails, Nuxt.js)<br>
+
+docker-compose.yml と同じディレクトリにある `.env`ファイルが自動で読まれる<br>
