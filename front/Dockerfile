@@ -2,7 +2,6 @@
 FROM node:16.13.1-alpine
 
 ARG WORKDIR
-ARG CONTAINER_PORT
 
 ENV HOME=/${WORKDIR} \
   LANG=C.UTF-8 \
@@ -12,15 +11,11 @@ ENV HOME=/${WORKDIR} \
   # https://ja.nuxtjs.org/faq/host-port/
   HOST=0.0.0.0
 
-# ENV check（このRUN命令は確認のためなので無くても良い）
-RUN echo ${HOME}
-RUN echo ${CONTAINER_PORT}
-
 WORKDIR ${HOME}
 
 # 公開用ポート番号を指定
 # 3000番が入ってくる(http://localhost(0.0.0.0):3000)
-EXPOSE ${CONTAINER_PORT}
+# EXPOSE ${CONTAINER_PORT}
 
 # 2021.12.13追記
 # FROM node:14.15.1-alpine
