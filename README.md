@@ -443,3 +443,149 @@ services:
     depends_on:
       - api
 ```
+
+## 14 Rails アプリを立ち上げる
+
+- `$ docker compose build`を実行<br>
+
+- `$ docker images`を実行してイメージが出来ているか確認`<br>
+
+```:console
+groovy@groovy-no-MacBook-Pro udemy-rails-nuxt % docker images
+REPOSITORY               TAG       IMAGE ID       CREATED              SIZE
+udemy-rails-nuxt_api     latest    1caed9e24b48   38 seconds ago       413MB
+udemy-rails-nuxt_front   latest    701437d939af   About a minute ago   110MB
+```
+
+- `$ docker compose run --rm api rails new . -f -B -d postgresql --api`を実行<br>
+
+* `$ docker compose build`を実行<br>
+
+- `$ docker compose up api`を実行<br>
+
+* localhost:3000 にアクセスしてみる(エラーが出る)<br>
+
+- `api/config/database.yml`を編集<br>
+
+```yml:database.yml
+# PostgreSQL. Versions 9.3 and up are supported.
+#
+# Install the pg driver:
+#   gem install pg
+# On macOS with Homebrew:
+#   gem install pg -- --with-pg-config=/usr/local/bin/pg_config
+# On macOS with MacPorts:
+#   gem install pg -- --with-pg-config=/opt/local/lib/postgresql84/bin/pg_config
+# On Windows:
+#   gem install pg
+#       Choose the win32 build.
+#       Install PostgreSQL and put its /bin directory on your path.
+#
+# Configure Using Gemfile
+# gem 'pg'
+#
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  host: db # 追記
+  username: postgres # 追記
+  password: <%= ENV["POSTGRES_PASSWORD"] %> # 追記
+  # For details on connection pooling, see Rails configuration guide
+  # https://guides.rubyonrails.org/configuring.html#database-pooling
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+development:
+  <<: *default
+  database: app_development
+
+  # The specified database role being used to connect to postgres.
+  # To create additional roles in postgres see `$ createuser --help`.
+  # When left blank, postgres will use the default role. This is
+  # the same name as the operating system user that initialized the database.
+  #username: app
+  # The password associated with the postgres role (username).
+  #password:
+  # Connect on a TCP socket. Omitted by default since the client uses a
+  # domain socket that doesn't need configuration. Windows does not have
+  # domain sockets, so uncomment these lines.
+  #host: localhost
+  # The TCP port the server listens on. Defaults to 5432.
+  # If your server runs on a different port number, change accordingly.
+  #port: 5432
+  # Schema search path. The server defaults to $user,public
+  #schema_search_path: myapp,sharedapp,public
+  # Minimum log levels, in increasing order:
+  #   debug5, debug4, debug3, debug2, debug1,
+  #   log, notice, warning, error, fatal, and panic
+  # Defaults to warning.
+  #min_messages: notice
+
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+test:
+  <<: *default
+  database: app_test
+
+# As with config/credentials.yml, you never want to store sensitive information,
+# like your database password, in your source code. If your source code is
+# ever seen by anyone, they now have access to your database.
+#
+# Instead, provide the password as a unix environment variable when you boot
+# the app. Read https://guides.rubyonrails.org/configuring.html#configuring-a-database
+# for a full rundown on how to provide these environment variables in a
+# production deployment.
+#
+# On Heroku and other platform providers, you may have a full connection URL
+# available as an environment variable. For example:
+#
+#   DATABASE_URL="postgres://myuser:mypass@localhost/somedatabase"
+#
+# You can use this database configuration with:
+#
+#   production:
+#     url: <%= ENV['DATABASE_URL'] %>
+#
+production:
+  <<: *default
+  database: app_production
+  username: app
+  password: <%= ENV['APP_DATABASE_PASSWORD'] %>
+```
+
+- ターミナルで control + c を押してコンテナの停止をする<br>
+
+* `$ docker compose down`を実行してコンテナを削除<br>
+
+- `$ docker compose ps -a`を実行してコンテナが残っていないか確認<br>
+
+* `$ docker compose run --rm api rails db:create`を実行して DB を作成<br>
+
+- `$docker compose up api`を実行して api サービスを起動<br>
+
+* localhost:3000 にアクセス(Railsの初期画面が表示されればOK)<br>
+
+### Docker コマンド
+
+```terminal
+# コンテナ内で任意のコマンドを実行する
+$ docker-compose run <サービス名> <任意のコマンド>
+
+# Dockerイメージを作成する
+$ docker-compose build
+
+# 複数のコンテナの生成し起動する
+$ docker-compose up
+
+# コンテナを停止する
+$ docker-compose stop
+
+# 停止中のコンテナを削除する
+$ docker-compose rm -f
+
+# コンテナの停止・削除を一度に行う
+$ docker-compose down
+
+# コンテナの一覧を表示する
+$ docker-compose ps -a
+```
