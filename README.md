@@ -309,3 +309,70 @@ WORKDIR ${HOME}
 .env => docer-compose.yml => Dockerfile => 各コンテナに渡る(Rails, Nuxt.js)<br>
 
 docker-compose.yml と同じディレクトリにある `.env`ファイルが自動で読まれる<br>
+
+## 12 .env, .gitignore, docker-compose.yml を作成
+
+- `$ touch {.gitignore,.env,docker-compose.yml}`を実行<br>
+
+* `.gitigonore`ファイルを編集<br>
+
+```
+.env
+/.DS_store
+```
+
+- `.env`ファイルを編集<br>
+
+```
+# commons
+WORKDIR=app
+API_PORT=3000
+FRONT_PORT=8080
+
+# db
+POSTGRES_PASSWORD=password
+```
+
+- `docker-compose.yml`を編集<br>
+
+```
+version: '3.8'
+
+services:
+  db:
+    image: postgres:12.3-alpine
+    environment:
+      TZ: UTC
+      PGTZ: UTC
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+    volumes:
+      - ./api/tmp/db:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./api
+      args:
+        WORKDIR: $WORKDIR
+    environment:
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+    volumes:
+      - ./api:/$WORKDIR
+    depends_on:
+      - db
+    ports:
+      - "$API_PORT:$CONTAINER_PORT"
+
+  front:
+    build:
+      context: ./front
+      args:
+        WORKDIR: $WORKDIR
+        CONTAINER_PORT: $CONTAINER_PORT
+    command: yarn run dev
+    volumes:
+      - ./front:/$WORKDIR
+    ports:
+      - "$FRONT_PORT:$CONTAINER_PORT"
+    depends_on:
+      - api
+```
